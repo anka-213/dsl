@@ -1,0 +1,31 @@
+name: "Test"
+on:
+  pull_request:
+  push:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        # Nix Flakes doesn't work on shallow clones
+        fetch-depth: 0
+    - uses: cachix/install-nix-action@v11
+      with:
+        install_url: https://github.com/numtide/nix-flakes-installer/releases/download//install
+        # Configure Nix to enable flakes
+        extra_nix_config: |
+          experimental-features = nix-command flakes
+    - uses: cachix/cachix-action@v8
+      with:
+        name: cclaw
+        # If you chose signing key for write access
+        signingKey: '${{ secrets.CACHIX_SIGNING_KEY }}'
+        # If you chose API tokens for write access OR if you have a private cache
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+    # Run the general flake checks
+    - run: nix flake check
+    # Verify that the main program builds
+    - run: nix shell -c echo OK
+    # Verify that the main program builds
+    - run: nix shell -c make test
